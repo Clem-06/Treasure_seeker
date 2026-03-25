@@ -1,0 +1,71 @@
+name: Tournament Autograder
+
+on:
+  workflow_dispatch:      
+  push:            
+    branches: [ main ]
+
+jobs:
+  tournament:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15  
+
+    steps:
+      - name: Checkout student repo
+        uses: actions/checkout@v4
+        with:
+          path: student
+
+      - name: Checkout teacher engine (private)
+        uses: actions/checkout@v4
+        with:
+          repository: ConcordiaPaulaLagoTeaching/Foragers_TeachersCopy
+	  token: ${{ secrets.FORAGERS_PAT }}
+          path: engine
+          
+      - name: Debug directory structure
+        run: |
+          echo "=== STUDENT REPO ==="
+          find student -type f
+          echo "=== ENGINE REPO ==="
+          find engine -type f
+          
+      # 3. Set up Java
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Inject student players into engine
+        run: |
+          cp student/Foragers/src/main/java/org/concordia/Player1.java \
+             engine/Foragers/src/main/java/org/concordia/Player1.java
+          cp student/Foragers/src/main/java/org/concordia/Player2.java \
+             engine/Foragers/src/main/java/org/concordia/Player2.java
+
+      - name: Compile
+        working-directory: engine/Foragers
+        run: |
+          mkdir -p out
+          find src/main/java -name "*.java" | xargs javac -d out -cp src/main/java
+
+      - name: Copy map resource
+        run: |
+          cp engine/Foragers/src/main/resources/org/concordia/*.txt \
+             engine/Foragers/out/org/concordia/
+
+      - name: Run tournament
+        working-directory: engine/Foragers
+        run: |
+          java -cp out org.concordia.runner.TournamentRunner \
+            "${{ github.repository }}" \
+            "${{ github.actor }}"
+
+      - name: Upload match log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: match-log-${{ github.actor }}
+          path: engine/Foragers/match_log.txt
+          retention-days: 30
