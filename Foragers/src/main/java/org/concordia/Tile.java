@@ -19,6 +19,12 @@ public class Tile {
         this.collision = (texture != '.');
     }
 
+    void display(){  //used for testing distances to closest treasure
+        System.out.println("TILE DISPLAY: x = " + x + ",  y = " + y);
+    }
+
+
+
     //Can use these to access individual neighbours if required. Otherwise the neighbours array will do fine.
     public Tile getNW() { return neighbours[0]; }
     public Tile getN()  { return neighbours[1]; }

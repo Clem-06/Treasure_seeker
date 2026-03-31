@@ -1,8 +1,5 @@
 package org.concordia;
 
-import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
-
 public class Player1 {
 
     public char texture = '1';
@@ -10,11 +7,7 @@ public class Player1 {
     public int y;
     public int score;
 
-    // STUDENT MAY PLACE ANY EXTRA FIELDS THEY WANT HERE -------------------
-
-    // ----------------------------------------------------------------------
-
-    int manhattanToNearestTreasure(GameState s) {
+    int maxhattanToNearestTreasure(GameState s) {
         int best = 10000;
         Tile closest = null;
 
@@ -26,7 +19,7 @@ public class Player1 {
                 Tile t = s.tiles[y][x];
 
                 if (t.treasurePresent) {
-                    int dist = Math.abs(px - x) + Math.abs(py - y);
+                    int dist = Math.max(Math.abs(px - x), Math.abs(py - y));  // MaxHattan takes max of xdiff and ydiff to take into account diagonal movement
                     if (dist < best) {
                         closest = t;
                         best = dist;
@@ -34,7 +27,8 @@ public class Player1 {
                 }
             }
         }
-//        closest.display();
+//       closest.display();
+//        System.out.println("Steps away from target: " + best);
         return best;
     }
 
@@ -46,20 +40,37 @@ public class Player1 {
 
     public float evaluate(GameState state) {
 
-        int scoreDiff = state.p1_score - state.p2_score;
-        float manhattanPoints = manhattanToNearestTreasure(state);
+        int scorePointsDiff = state.p1_score - state.p2_score;
+        float maxhattanPoints = maxhattanToNearestTreasure(state);
+        //float territoryPoints = asessTerritoryDiff(state, true);
 
-        return 15 * scoreDiff - manhattanPoints;
+        float scoreCoeff = 15;
+        float distanceCoeff = 1;
+        float territoryCoeff = 0;
+
+        return scoreCoeff * scorePointsDiff - distanceCoeff * maxhattanPoints;  // + territoryCoeff * territoryPoints;
     }
 
-    void applyMove(GameState s, Tile next) {
-        s.p1_x = next.x;
-        s.p1_y = next.y;
+    private float asessTerritoryDiff(GameState state, boolean isPlayer1) {
+        float distanceSum = 0;
 
-        if (next.treasurePresent) {
-            s.p1_score += next.treasure.value;
+        int px = state.p1_x;
+        int py = state.p1_y;
+
+        for (int y = 0; y < MapLoader.MAP_HEIGHT; y++) {
+            for (int x = 0; x < MapLoader.MAP_WIDTH; x++) {
+                Tile t = state.tiles[y][x];
+
+                if (t.treasurePresent) {
+                    int dist = Math.abs(px - x) + Math.abs(py - y);
+                    distanceSum += dist;
+                }
+            }
         }
+
+        return distanceSum;
     }
+
 
     float search(GameState s, int depth) {
         if (depth == 0) return evaluate(s);
@@ -107,7 +118,7 @@ public class Player1 {
             if (n == null || n.collision) continue;
 
             GameState sim = new GameState(
-                    state.tiles, // shared (read-only!)
+                    state.tiles,
                     new Player1(state.p1_x, state.p1_y),
                     new Player2(state.p2_x, state.p2_y),
                     state.rounds_left
@@ -126,16 +137,18 @@ public class Player1 {
                 bestScore = possibleEval;
 //                System.out.println("NEW BEST SCORE ");
             }
-
         }
-        System.out.println("Evaluation of best move: " + bestScore);
+//        System.out.println("Evaluation of best move: " + bestScore);
         return best;
     }
 
-    public void updatePlayer(GameState state) {
-        this.x = state.p1_x;
-        this.y = state.p1_y;
-        this.score = state.p1_score;
+    void applyMove(GameState s, Tile next) {
+        s.p1_x = next.x;
+        s.p1_y = next.y;
+
+        if (next.treasurePresent) {
+            s.p1_score += next.treasure.value;
+        }
     }
 
     public int getTeleport() {

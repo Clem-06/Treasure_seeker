@@ -3,6 +3,7 @@ package org.concordia;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 import static org.concordia.MapLoader.MAP_HEIGHT;
 import static org.concordia.MapLoader.MAP_WIDTH;
@@ -27,7 +28,11 @@ public class GameSetup {
                     eligible.add(t);
             }
 
-        Collections.shuffle(eligible);
+//        Collections.shuffle(eligible);
+
+        int shuffleSeed = 5846;
+        Collections.shuffle(eligible, new Random(shuffleSeed));  //deterministic shuffle of treasure for repeatability
+
         int count = Math.min(numberOfTreasures, eligible.size());
         for (int i = 0; i < count; i++) {
             eligible.get(i).treasurePresent = true;
