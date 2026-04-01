@@ -123,6 +123,9 @@ public class GameEngine {
     }
 
     public int playGame() {
+
+        long startTime = System.nanoTime();
+
         while (state.rounds_left-- > 0) {
             render(state.tiles);
             player1Decision(state);
@@ -130,6 +133,12 @@ public class GameEngine {
             gameTick();
         }
         render(state.tiles);
+
+        long endTime = System.nanoTime();
+        long duration = (endTime - startTime); // Duration in nanoseconds
+
+        long durationMillis = duration / 1_000_000;
+        System.out.println("Execution time in ms:  " + durationMillis);
 
         if (state.p1.score == state.p2.score) return 3;
         return (state.p1.score > state.p2.score) ? 1 : 2;
