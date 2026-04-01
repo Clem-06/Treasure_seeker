@@ -22,6 +22,8 @@ public class GameEngine {
             for (int j = 0; j < MAP_WIDTH; j++) {
                 Tile tile = tiles[i][j];
 
+                sb.append(' ');
+
                 if (tile.player1Present && tile.player2Present) {
                     sb.append(AnsiColor.BOLD).append(AnsiColor.BRIGHT_YELLOW).append('3').append(AnsiColor.RESET);
                 } else if (tile.player1Present) {

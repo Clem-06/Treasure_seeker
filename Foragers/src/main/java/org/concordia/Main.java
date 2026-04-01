@@ -22,8 +22,8 @@ public class Main {
         GameEngine engine = new GameEngine(tiles, p1, p2, config.rounds, config.gameTick);
         int victor = engine.playGame();
 
-        if (victor == 1) System.out.println("Player 1 wins with a final score of: " + p1.score);
-        else if (victor == 2) System.out.println("Player 2 wins with a final score of: " + p2.score);
+        if (victor == 1) System.out.println("Player 1 wins with a final score of: " + p1.score + "     P2 has: " + p2.score); //edited for more infor
+        else if (victor == 2) System.out.println("Player 2 wins with a final score of: " + p2.score + "     P1 has: " + p1.score);
         else if (victor == 3) System.out.println("Tie! Both scored: " + p1.score);
     }
 }

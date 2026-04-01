@@ -1,8 +1,5 @@
 package org.concordia;
 
-import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
-
 public class Player2 {
 
     public char texture = '2';
@@ -10,23 +7,7 @@ public class Player2 {
     public int y;
     public int score;
 
-    // STUDENT MAY PLACE ANY EXTRA FIELDS THEY WANT HERE -------------------
-
-    // ----------------------------------------------------------------------
-
-    public Player2(int x, int y) {
-        this.x = x;
-        this.y = y;
-        this.score = 0;
-    }
-
-    public /*Student decides the return type*/ void findPath(GameState state) {
-    }
-
-    public /*Student decides the return type*/ void predictPath(GameState state) {
-    }
-
-    int manhattanToNearestTreasure(GameState s) {
+    int maxhattanToNearestTreasure(GameState s) {
         int best = 10000;
         Tile closest = null;
 
@@ -38,7 +19,7 @@ public class Player2 {
                 Tile t = s.tiles[y][x];
 
                 if (t.treasurePresent) {
-                    int dist = Math.abs(px - x) + Math.abs(py - y);
+                    int dist = Math.max(Math.abs(px - x), Math.abs(py - y));  // MaxHattan takes max of xdiff and ydiff to take into account diagonal movement
                     if (dist < best) {
                         closest = t;
                         best = dist;
@@ -46,55 +27,130 @@ public class Player2 {
                 }
             }
         }
+//       closest.display();
+//        System.out.println("Steps away from target: " + best);
         return best;
+    }
+
+    public Player2(int x, int y) {
+        this.x = x;
+        this.y = y;
+        this.score = 0;
+    }
+
+    public float evaluate(GameState state) {
+
+        int scorePointsDiff = state.p1_score - state.p2_score;
+        float maxhattanPoints = maxhattanToNearestTreasure(state);
+        //float territoryPoints = asessTerritoryDiff(state, true);
+
+        float scoreCoeff = 15;
+        float distanceCoeff = -1;
+        float territoryCoeff = 0;
+
+        return scoreCoeff * scorePointsDiff - distanceCoeff * maxhattanPoints;  // + territoryCoeff * territoryPoints;
+    }
+
+    private float asessTerritoryDiff(GameState state) {
+        float distanceSum = 0;
+
+        int px = state.p2_x;
+        int py = state.p2_y;
+
+        for (int y = 0; y < MapLoader.MAP_HEIGHT; y++) {
+            for (int x = 0; x < MapLoader.MAP_WIDTH; x++) {
+                Tile t = state.tiles[y][x];
+
+                if (t.treasurePresent) {
+                    int dist = Math.abs(px - x) + Math.abs(py - y);
+                    distanceSum += dist;
+                }
+            }
+        }
+
+        return distanceSum;
+    }
+
+
+    float search(GameState s, int depth) {
+        if (depth == 0) return evaluate(s);
+
+        Tile current = s.tiles[s.p2_y][s.p2_x];
+        float best = -500_000;
+
+        for (Tile n : current.neighbours) {
+            if (n == null || n.collision) continue;
+
+            GameState sim = new GameState(
+                    s.tiles, // shared (read-only!)
+                    new Player1(s.p1_x, s.p1_y),
+                    new Player2(s.p2_x, s.p2_y),
+                    s.rounds_left
+            );
+
+            sim.p1_x = s.p1_x;
+            sim.p1_y = s.p1_y;
+            sim.p1_score = s.p1_score;
+            sim.p2_score = s.p2_score;
+
+            applyMove(sim, n);
+
+            float val = search(sim, depth - 1);
+            best = Math.max(best, val);
+        }
+
+        return best;
+    }
+
+
+    public /*Student decides the return type*/ void findPath(GameState state) {
+    }
+
+    public /*Student decides the return type*/ void predictPath(GameState state) {
     }
 
     public Tile moveDecision(GameState state) {
         Tile current = state.tiles[y][x];
 
-//        System.out.println("Current P2 manahtan to nearest treasure:  " + manhattanToNearestTreasure(state));
+        Tile best = null;
+        float bestScore = 500_000;
 
+        for (Tile n : current.neighbours) {
+            if (n == null || n.collision) continue;
 
-        int step = state.rounds_left;
-        int phase = 3 - ((step / 15) % 4); // ensures N → W → S → E order
+            GameState sim = new GameState(
+                    state.tiles,
+                    new Player1(state.p1_x, state.p1_y),
+                    new Player2(state.p2_x, state.p2_y),
+                    state.rounds_left
+            );
+            sim.p1_x = state.p1_x;
+            sim.p1_y = state.p1_y;
+            sim.p1_score = state.p1_score;
+            sim.p2_score = state.p2_score;
 
-        int r = ThreadLocalRandom.current().nextInt(0, 3);
+            applyMove(sim, n);
 
-        Tile next = null;
+            float possibleEval = evaluate(sim);
+//            System.out.println("Evaluated Score : " + possibleEval);
 
-        switch (phase) {
-            case 0: // N
-                if (r == 0) next = current.getN();
-                else if (r == 1) next = current.getNW();
-                else next = current.getNE();
-                break;
-
-            case 1: // W
-                if (r == 0) next = current.getW();
-                else if (r == 1) next = current.getNW();
-                else next = current.getSW();
-                break;
-
-            case 2: // S
-                if (r == 0) next = current.getS();
-                else if (r == 1) next = current.getSW();
-                else next = current.getSE();
-                break;
-
-            case 3: // E
-                if (r == 0) next = current.getE();
-                else if (r == 1) next = current.getNE();
-                else next = current.getSE();
-                break;
+            if (possibleEval < bestScore) {  //searching for lowest for P2
+                best = n;
+                bestScore = possibleEval;
+//                System.out.println("NEW BEST SCORE ");
+            }
         }
-
-        return next;
+//        System.out.println("Evaluation of best move: " + bestScore);
+        return best;
     }
 
-    public void updatePlayer(GameState state) {
-        this.x = state.p2_x;
-        this.y = state.p2_y;
-        this.score = state.p2_score;
+    void applyMove(GameState s, Tile next) {
+        s.p2_x = next.x;
+        s.p2_y = next.y;
+
+        if (next.treasurePresent) {
+            s.p2_score += next.treasure.value;
+        }
     }
 
     public int getTeleport() {

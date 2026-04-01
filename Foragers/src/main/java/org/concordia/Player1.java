@@ -7,6 +7,17 @@ public class Player1 {
     public int y;
     public int score;
 
+    class MoveEval {
+        Tile tile;
+        float eval;
+
+        MoveEval(Tile tile, float eval) {
+            this.tile = tile;
+            this.eval = eval;
+        }
+    }
+
+
     int maxhattanToNearestTreasure(GameState s) {
         int best = 10000;
         Tile closest = null;
@@ -51,9 +62,68 @@ public class Player1 {
         return scoreCoeff * scorePointsDiff - distanceCoeff * maxhattanPoints;  // + territoryCoeff * territoryPoints;
     }
 
-    private float asessTerritoryDiff(GameState state, boolean isPlayer1) {
-        float distanceSum = 0;
 
+    MoveEval search(GameState s, int depth) {
+        if (depth == 0) {
+            return new MoveEval(null, evaluate(s));
+        }
+        Tile current = s.tiles[s.p1_y][s.p1_x];
+
+
+        float best = -500_000;
+        Tile bestTile = null;
+
+        for (Tile n : current.neighbours) {
+            if (n == null || n.collision) continue;
+
+            GameState sim = new GameState(s.tiles, new Player1(s.p1_x, s.p1_y), new Player2(s.p2_x, s.p2_y), s.rounds_left);
+
+            sim.p1_x = s.p1_x;
+            sim.p1_y = s.p1_y;
+            sim.p1_score = s.p1_score;
+            sim.p2_score = s.p2_score;
+
+            applyMove(sim, n);
+
+            MoveEval deeper = search(sim, depth - 1);
+
+            if (deeper.eval > best) {
+                best = deeper.eval;
+                bestTile = n;
+            }
+        }
+        if (bestTile == null) {
+            System.out.println("P1 SEARCH FOUND NO VALID MOVES AT DEPTH " + depth);
+        }
+        return new MoveEval(bestTile, best);
+    }
+
+
+
+    void applyMove(GameState sim, Tile next) {
+        sim.p1_x = next.x;
+        sim.p1_y = next.y;
+
+        if (next.treasurePresent) {
+            sim.p1_score += next.treasure.value;
+        }
+    }
+
+
+    public /*Student decides the return type*/ void findPath(GameState state) {
+    }
+
+    public /*Student decides the return type*/ void predictPath(GameState state) {
+    }
+
+    public Tile moveDecision(GameState state) {
+
+        MoveEval bestMove = search(state, 2);   //reccursive search - intial state, depth
+        return bestMove.tile;
+    }
+
+    private float asessTerritoryDiff(GameState state) {
+        float distanceSum = 0;
         int px = state.p1_x;
         int py = state.p1_y;
 
@@ -67,89 +137,11 @@ public class Player1 {
                 }
             }
         }
-
         return distanceSum;
     }
 
 
-    float search(GameState s, int depth) {
-        if (depth == 0) return evaluate(s);
 
-        Tile current = s.tiles[s.p1_y][s.p1_x];
-        float best = -500_000;
-
-        for (Tile n : current.neighbours) {
-            if (n == null || n.collision) continue;
-
-            GameState sim = new GameState(
-                    s.tiles, // shared (read-only!)
-                    new Player1(s.p1_x, s.p1_y),
-                    new Player2(s.p2_x, s.p2_y),
-                    s.rounds_left
-            );
-
-            sim.p1_x = s.p1_x;
-            sim.p1_y = s.p1_y;
-            sim.p1_score = s.p1_score;
-
-            applyMove(sim, n);
-
-            float val = search(sim, depth - 1);
-            best = Math.max(best, val);
-        }
-
-        return best;
-    }
-
-
-    public /*Student decides the return type*/ void findPath(GameState state) {
-    }
-
-    public /*Student decides the return type*/ void predictPath(GameState state) {
-    }
-
-    public Tile moveDecision(GameState state) {
-        Tile current = state.tiles[y][x];
-
-        Tile best = null;
-        float bestScore = -500_000;
-
-        for (Tile n : current.neighbours) {
-            if (n == null || n.collision) continue;
-
-            GameState sim = new GameState(
-                    state.tiles,
-                    new Player1(state.p1_x, state.p1_y),
-                    new Player2(state.p2_x, state.p2_y),
-                    state.rounds_left
-            );
-            sim.p1_x = state.p1_x;
-            sim.p1_y = state.p1_y;
-            sim.p1_score = state.p1_score;
-
-            applyMove(sim, n);
-
-            float possibleEval = evaluate(sim);
-//            System.out.println("Evaluated Score : " + possibleEval);
-
-            if (possibleEval > bestScore) {
-                best = n;
-                bestScore = possibleEval;
-//                System.out.println("NEW BEST SCORE ");
-            }
-        }
-//        System.out.println("Evaluation of best move: " + bestScore);
-        return best;
-    }
-
-    void applyMove(GameState s, Tile next) {
-        s.p1_x = next.x;
-        s.p1_y = next.y;
-
-        if (next.treasurePresent) {
-            s.p1_score += next.treasure.value;
-        }
-    }
 
     public int getTeleport() {
         return 0;

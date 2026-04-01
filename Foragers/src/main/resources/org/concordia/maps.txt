@@ -1,1 +1,2 @@
 Grotto.txt
+WallTest.txt

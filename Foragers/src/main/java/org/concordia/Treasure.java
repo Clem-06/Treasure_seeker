@@ -5,7 +5,7 @@ public class Treasure {
     public char texture;
 
     //STUDENT MODIFIABLE PARAMETER---------
-    public double treasureValueRatio = 0.8; //Change this between 0.0-1.0 to change how many big treasures spawn
+    public double treasureValueRatio = 1.0; //Change this between 0.0-1.0 to change how many big treasures spawn
     //-------------------------------------
 
     Treasure(){

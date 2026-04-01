@@ -24,7 +24,9 @@ public class MapLoader {
  
     //Map Randomizer
     public Tile[][] load() throws IOException {
-        String chosen = pickRandomMap();
+        //String chosen = pickRandomMap();
+        String chosen = "Grotto.txt";
+        //String chosen = "WallTest.txt";     //manually choose map for testing
         System.out.println("[MapLoader] Selected map: " + chosen);
         return load(chosen);
     }
