@@ -7,15 +7,7 @@ public class Player1 {
 	public int y;
 	public int score;
 
-	class MoveEval {
-		Tile tile;
-		float eval;
-
-		MoveEval(Tile tile, float eval) {
-			this.tile = tile;
-			this.eval = eval;
-		}
-	}
+	public int totalPruned = 0;
 
 
 	int maxhattanToNearestTreasure(GameState s) {
@@ -49,7 +41,7 @@ public class Player1 {
 		this.score = 0;
 	}
 
-	float evaluateWithCollected(GameState state, boolean[][] collected) {
+	float evaluateWithCollected(GameState state, boolean[] collected) {
 		int scorePointsDiff = state.p1_score - state.p2_score;
 
 		int best = 10000;
@@ -60,7 +52,7 @@ public class Player1 {
 			for (int x = 0; x < MapLoader.MAP_WIDTH; x++) {
 				Tile t = state.tiles[y][x];
 
-				if (t.treasurePresent && !collected[y][x]) {
+				if (t.treasurePresent && !collected[idx(x, y)]) {
 					int dist = Math.max(Math.abs(px - x), Math.abs(py - y));
 					if (dist < best) best = dist;
 				}
@@ -71,59 +63,64 @@ public class Player1 {
 	}
 
 
-	MoveEval search(GameState s, int depth, boolean[][] collected) {
+	float search(GameState s, int depth, boolean[] collected, float alpha) {
 		if (depth == 0) {
-			return new MoveEval(null, evaluateWithCollected(s, collected));
+			return evaluateWithCollected(s, collected);
 		}
+
 		Tile current = s.tiles[s.p1_y][s.p1_x];
 
-
 		float best = -500_000;
-		Tile bestTile = null;
 
 		for (Tile n : current.neighbours) {
 			if (n == null || n.collision) continue;
 
-			GameState sim = new GameState(s.tiles, new Player1(s.p1_x, s.p1_y), new Player2(s.p2_x, s.p2_y), s.rounds_left);
+			int oldX = s.p1_x;   //save old state
+			int oldY = s.p1_y;
+			int oldScore = s.p1_score;
 
-			sim.p1_x = s.p1_x;
-			sim.p1_y = s.p1_y;
-			sim.p1_score = s.p1_score;
-			sim.p2_score = s.p2_score;
+			int i = idx(n.x, n.y);
+			boolean collectedHere = false;
 
-			boolean[][] newCollected = new boolean[MapLoader.MAP_HEIGHT][MapLoader.MAP_WIDTH];
+			s.p1_x = n.x;
+			s.p1_y = n.y;
 
-			for (int y = 0; y < MapLoader.MAP_HEIGHT; y++) {
-				System.arraycopy(collected[y], 0, newCollected[y], 0, MapLoader.MAP_WIDTH);
+			if (n.treasurePresent && !collected[i]) {
+				s.p1_score += n.treasure.value;
+				collected[i] = true;
+				collectedHere = true;
 			}
 
-			applyMove(sim, n,newCollected);
-
-
-			MoveEval deeper = search(sim, depth - 1, newCollected);
-
-			if (deeper.eval > best) {
-				best = deeper.eval;
-				bestTile = n;
+			float potentialEval = evaluateWithCollected(s, collected) +  10 * (depth-1);
+			if (depth==5){
+				System.out.println("Potential eval: " + potentialEval + " current alpha: " + alpha);
 			}
+			if(potentialEval <= alpha){
+				totalPruned = totalPruned + 1;
+				continue;
+			}
+
+			float deeper = search(s, depth - 1, collected,alpha);
+
+			if (deeper > best) {
+				best = deeper;
+			}
+
+			s.p1_x = oldX;  //put sim back to old state after recursion
+			s.p1_y = oldY;
+			s.p1_score = oldScore;
+
+			if (collectedHere) {
+				collected[i] = false;
+			}
+
+
+
+
 		}
-		if (bestTile == null) {
-			System.out.println("P1 SEARCH FOUND NO VALID MOVES AT DEPTH " + depth);
-		}
-		return new MoveEval(bestTile, best);
+
+		return best;
 	}
-
-
-	void applyMove(GameState sim, Tile next, boolean[][] collected){
-		sim.p1_x = next.x;
-		sim.p1_y = next.y;
-
-		if (next.treasurePresent && !collected[next.y][next.x]) {
-			sim.p1_score += next.treasure.value;
-			collected[next.y][next.x] = true;
-		}
-	}
-
 
 	public /*Student decides the return type*/ void findPath(GameState state) {
 	}
@@ -132,11 +129,58 @@ public class Player1 {
 	}
 
 	public Tile moveDecision(GameState state) {
-		boolean[][] collected = new boolean[MapLoader.MAP_HEIGHT][MapLoader.MAP_WIDTH];
+		GameState sim = new GameState(state.tiles, new Player1(state.p1_x, state.p1_y), new Player2(state.p2_x, state.p2_y), state.rounds_left);
 
-		MoveEval bestMove = search(state, 6, collected);
+		sim.p1_x = state.p1_x;
+		sim.p1_y = state.p1_y;
+		sim.p1_score = state.p1_score;
+		sim.p2_score = state.p2_score;
 
-		return bestMove.tile;
+		boolean[] collected = new boolean[MapLoader.MAP_HEIGHT * MapLoader.MAP_WIDTH];
+
+		Tile current = sim.tiles[sim.p1_y][sim.p1_x];
+
+		float best = -500_000;
+		Tile bestTile = null;
+
+		for (Tile n : current.neighbours) { //exactly the same as recursive search but root must look for tiles
+			if (n == null || n.collision) continue;
+
+			int oldX = sim.p1_x;
+			int oldY = sim.p1_y;
+			int oldScore = sim.p1_score;
+
+			int i = idx(n.x, n.y);
+			boolean collectedHere = false;
+
+			sim.p1_x = n.x;
+			sim.p1_y = n.y;
+
+			if (n.treasurePresent && !collected[i]) {
+				sim.p1_score += n.treasure.value;
+				collected[i] = true;
+				collectedHere = true;
+			}
+
+			float val = search(sim, 5, collected, best); // depth-1
+
+			if (val > best) {
+				best = val;
+				bestTile = n;
+			}
+
+			sim.p1_x = oldX;
+			sim.p1_y = oldY;
+			sim.p1_score = oldScore;
+
+			if (collectedHere) {
+				collected[i] = false;
+			}
+		}
+
+		System.out.println("Total pruned: " + totalPruned);
+
+		return bestTile;
 	}
 
 	private float asessTerritoryDiff(GameState state) {
@@ -157,6 +201,9 @@ public class Player1 {
 		return distanceSum;
 	}
 
+	int idx(int x, int y) {
+		return y * MapLoader.MAP_WIDTH + x;
+	}
 
 	public int getTeleport() {
 		return 0;
