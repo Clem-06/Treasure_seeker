@@ -41,12 +41,24 @@ public class Player1 {
 		this.score = 0;
 	}
 
-	float evaluateWithCollected(GameState state, boolean[] collected) {
+	float evaluateWithCollected(GameState state, boolean[] treasureArr, boolean[] collected) {
 		int scorePointsDiff = state.p1_score - state.p2_score;
 
 		int best = 10000;
 		int px = state.p1_x;
 		int py = state.p1_y;
+
+//		for (int i = 0; i < treasureArr.length; i++) {
+//			if (treasureArr[i] && !collected[i]) {
+//
+//				int y = i / MapLoader.MAP_HEIGHT;
+//				int x = i % MapLoader.MAP_WIDTH;
+//
+//				int dist = Math.max(Math.abs(px - x), Math.abs(py - y));
+//				if (dist < best) best = dist;
+//			}
+//		}
+
 
 		for (int y = 0; y < MapLoader.MAP_HEIGHT; y++) {
 			for (int x = 0; x < MapLoader.MAP_WIDTH; x++) {
@@ -58,14 +70,26 @@ public class Player1 {
 				}
 			}
 		}
-
 		return 15 * scorePointsDiff - best;
 	}
 
+	boolean hasAdjacentTreasure(GameState s, boolean[] treasureArr,  boolean[] collected) {
+		Tile current = s.tiles[s.p1_y][s.p1_x];
 
-	float search(GameState s, int depth, boolean[] collected, float alpha) {
+		for(Tile n : current.neighbours) {
+			if (n == null || n.collision) continue;
+
+		}
+
+
+
+		return false;
+	}
+
+
+	float search(GameState s, boolean[] treasureArr, int depth, boolean[] collected, float alpha) {
 		if (depth == 0) {
-			return evaluateWithCollected(s, collected);
+			return evaluateWithCollected(s, treasureArr, collected);
 		}
 
 		Tile current = s.tiles[s.p1_y][s.p1_x];
@@ -91,16 +115,16 @@ public class Player1 {
 				collectedHere = true;
 			}
 
-			float potentialEval = evaluateWithCollected(s, collected) +  10 * (depth-1);
-			if (depth==5){
-				System.out.println("Potential eval: " + potentialEval + " current alpha: " + alpha);
-			}
-			if(potentialEval <= alpha){
-				totalPruned = totalPruned + 1;
-				continue;
-			}
+//			float potentialEval = evaluateWithCollected(s, collected) +  10 * (depth-1);
+//			if (depth==5){
+//				System.out.println("Potential eval: " + potentialEval + " current alpha: " + alpha);    //VERY BROKEN PRUNING
+//			}
+//			if(potentialEval <= alpha){
+//				totalPruned = totalPruned + 1;
+//				continue;
+//			}
 
-			float deeper = search(s, depth - 1, collected,alpha);
+			float deeper = search(s, treasureArr, depth - 1, collected, alpha);
 
 			if (deeper > best) {
 				best = deeper;
@@ -113,10 +137,6 @@ public class Player1 {
 			if (collectedHere) {
 				collected[i] = false;
 			}
-
-
-
-
 		}
 
 		return best;
@@ -137,6 +157,16 @@ public class Player1 {
 		sim.p2_score = state.p2_score;
 
 		boolean[] collected = new boolean[MapLoader.MAP_HEIGHT * MapLoader.MAP_WIDTH];
+		boolean[] startTreasureArr = new boolean[MapLoader.MAP_HEIGHT * MapLoader.MAP_WIDTH];
+
+		for (int y = 0; y < MapLoader.MAP_HEIGHT; y++) {
+			for (int x = 0; x < MapLoader.MAP_WIDTH; x++) {
+				if (state.tiles[y][x].treasurePresent) {
+					startTreasureArr[idx(x, y)] = true;
+				}
+			}
+		}
+
 
 		Tile current = sim.tiles[sim.p1_y][sim.p1_x];
 
@@ -162,7 +192,7 @@ public class Player1 {
 				collectedHere = true;
 			}
 
-			float val = search(sim, 5, collected, best); // depth-1
+			float val = search(sim, startTreasureArr, 1, collected, best); // depth-1
 
 			if (val > best) {
 				best = val;
