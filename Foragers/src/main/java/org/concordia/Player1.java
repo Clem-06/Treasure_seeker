@@ -1,5 +1,8 @@
 package org.concordia;
 
+import static org.concordia.MapLoader.MAP_HEIGHT;
+import static org.concordia.MapLoader.MAP_WIDTH;
+
 public class Player1 {
 
 	public char texture = '1';
@@ -7,33 +10,10 @@ public class Player1 {
 	public int y;
 	public int score;
 
+	private int positionsSearched;
+
 	public int totalPruned = 0;
 
-
-	int maxhattanToNearestTreasure(GameState s) {
-		int best = 10000;
-		Tile closest = null;
-
-		int px = s.p1_x;
-		int py = s.p1_y;
-
-		for (int y = 0; y < MapLoader.MAP_HEIGHT; y++) {
-			for (int x = 0; x < MapLoader.MAP_WIDTH; x++) {
-				Tile t = s.tiles[y][x];
-
-				if (t.treasurePresent) {
-					int dist = Math.max(Math.abs(px - x), Math.abs(py - y));  // MaxHattan takes max of xdiff and ydiff to take into account diagonal movement
-					if (dist < best) {
-						closest = t;
-						best = dist;
-					}
-				}
-			}
-		}
-//       closest.display();
-//        System.out.println("Steps away from target: " + best);
-		return best;
-	}
 
 	public Player1(int x, int y) {
 		this.x = x;
@@ -44,51 +24,29 @@ public class Player1 {
 	float evaluateWithCollected(GameState state, boolean[] treasureArr, boolean[] collected) {
 		int scorePointsDiff = state.p1_score - state.p2_score;
 
-		int best = 10000;
+		int best = Integer.MAX_VALUE;
 		int px = state.p1_x;
 		int py = state.p1_y;
 
-//		for (int i = 0; i < treasureArr.length; i++) {
-//			if (treasureArr[i] && !collected[i]) {
-//
-//				int y = i / MapLoader.MAP_HEIGHT;
-//				int x = i % MapLoader.MAP_WIDTH;
-//
-//				int dist = Math.max(Math.abs(px - x), Math.abs(py - y));
-//				if (dist < best) best = dist;
-//			}
-//		}
+		for (int i = 0; i < treasureArr.length; i++) { //maxhattan logic with new flattened treasure map
+			if (treasureArr[i] && !collected[i]) {
 
+				int y = i / MapLoader.MAP_WIDTH;
+				int x = i % MapLoader.MAP_WIDTH;
 
-		for (int y = 0; y < MapLoader.MAP_HEIGHT; y++) {
-			for (int x = 0; x < MapLoader.MAP_WIDTH; x++) {
-				Tile t = state.tiles[y][x];
+				int dist = Math.max(Math.abs(px - x), Math.abs(py - y));
 
-				if (t.treasurePresent && !collected[idx(x, y)]) {
-					int dist = Math.max(Math.abs(px - x), Math.abs(py - y));
-					if (dist < best) best = dist;
-				}
+				if (dist < best) best = dist;
 			}
 		}
-		return 15 * scorePointsDiff - best;
+		return 1500 * scorePointsDiff -  best;
 	}
 
-	boolean hasAdjacentTreasure(GameState s, boolean[] treasureArr,  boolean[] collected) {
-		Tile current = s.tiles[s.p1_y][s.p1_x];
-
-		for(Tile n : current.neighbours) {
-			if (n == null || n.collision) continue;
-
-		}
-
-
-
-		return false;
-	}
 
 
 	float search(GameState s, boolean[] treasureArr, int depth, boolean[] collected, float alpha) {
 		if (depth == 0) {
+			positionsSearched++;
 			return evaluateWithCollected(s, treasureArr, collected);
 		}
 
@@ -114,13 +72,17 @@ public class Player1 {
 				collected[i] = true;
 				collectedHere = true;
 			}
-
-//			float potentialEval = evaluateWithCollected(s, collected) +  10 * (depth-1);
-//			if (depth==5){
-//				System.out.println("Potential eval: " + potentialEval + " current alpha: " + alpha);    //VERY BROKEN PRUNING
-//			}
-//			if(potentialEval <= alpha){
-//				totalPruned = totalPruned + 1;
+			//PRUNING
+//			float potentialMax = optimisticBound(s, depth, treasureArr, collected);
+//			if (potentialMax <= alpha) {
+//				s.p1_x = oldX;  //restore sim before pruning
+//				s.p1_y = oldY;
+//				s.p1_score = oldScore;
+//
+//				if (collectedHere) {
+//					collected[i] = false;
+//				}
+//				totalPruned++;
 //				continue;
 //			}
 
@@ -130,7 +92,9 @@ public class Player1 {
 				best = deeper;
 			}
 
-			s.p1_x = oldX;  //put sim back to old state after recursion
+			//alpha = Math.max(alpha, best);
+
+			s.p1_x = oldX;  //restore sim after recursion
 			s.p1_y = oldY;
 			s.p1_score = oldScore;
 
@@ -138,6 +102,7 @@ public class Player1 {
 				collected[i] = false;
 			}
 		}
+
 
 		return best;
 	}
@@ -148,6 +113,7 @@ public class Player1 {
 	public /*Student decides the return type*/ void predictPath(GameState state) {
 	}
 
+
 	public Tile moveDecision(GameState state) {
 		GameState sim = new GameState(state.tiles, new Player1(state.p1_x, state.p1_y), new Player2(state.p2_x, state.p2_y), state.rounds_left);
 
@@ -155,6 +121,7 @@ public class Player1 {
 		sim.p1_y = state.p1_y;
 		sim.p1_score = state.p1_score;
 		sim.p2_score = state.p2_score;
+
 
 		boolean[] collected = new boolean[MapLoader.MAP_HEIGHT * MapLoader.MAP_WIDTH];
 		boolean[] startTreasureArr = new boolean[MapLoader.MAP_HEIGHT * MapLoader.MAP_WIDTH];
@@ -167,6 +134,7 @@ public class Player1 {
 			}
 		}
 
+		//visualizeTreasure(startTreasureArr);  //Check treasure map looks like the actual treasures
 
 		Tile current = sim.tiles[sim.p1_y][sim.p1_x];
 
@@ -192,7 +160,7 @@ public class Player1 {
 				collectedHere = true;
 			}
 
-			float val = search(sim, startTreasureArr, 1, collected, best); // depth-1
+			float val = search(sim, startTreasureArr, 5, collected, best); // depth-1
 
 			if (val > best) {
 				best = val;
@@ -210,25 +178,18 @@ public class Player1 {
 
 		System.out.println("Total pruned: " + totalPruned);
 
+		String scientific = String.format("%e", (double) positionsSearched);
+		System.out.println("Positions searched: " + scientific);
+
+
+		int realTreasureCount = 0;
+		for (int y = 0; y < MapLoader.MAP_HEIGHT; y++)
+			for (int x = 0; x < MapLoader.MAP_WIDTH; x++)
+				if (state.tiles[y][x].treasurePresent) realTreasureCount++;
+
+		System.out.println("Real treasures remaining: " + realTreasureCount);
+
 		return bestTile;
-	}
-
-	private float asessTerritoryDiff(GameState state) {
-		float distanceSum = 0;
-		int px = state.p1_x;
-		int py = state.p1_y;
-
-		for (int y = 0; y < MapLoader.MAP_HEIGHT; y++) {
-			for (int x = 0; x < MapLoader.MAP_WIDTH; x++) {
-				Tile t = state.tiles[y][x];
-
-				if (t.treasurePresent) {
-					int dist = Math.abs(px - x) + Math.abs(py - y);
-					distanceSum += dist;
-				}
-			}
-		}
-		return distanceSum;
 	}
 
 	int idx(int x, int y) {

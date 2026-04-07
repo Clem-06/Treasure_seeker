@@ -7,6 +7,8 @@ public class Player2 {
     public int y;
     public int score;
 
+    private int positionsSearched;
+
     int maxhattanToNearestTreasure(GameState s) {
         int best = 10000;
         Tile closest = null;
@@ -59,6 +61,7 @@ public class Player2 {
 
     public Tile moveDecision(GameState state) {
         Tile current = state.tiles[y][x];
+        positionsSearched = 0;
 
         Tile best = null;
         float bestScore = 500_000;
@@ -89,6 +92,8 @@ public class Player2 {
             }
         }
 //        System.out.println("Evaluation of best move: " + bestScore);
+
+
         return best;
     }
 
