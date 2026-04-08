@@ -1,8 +1,5 @@
 package org.concordia;
 
-import static org.concordia.MapLoader.MAP_HEIGHT;
-import static org.concordia.MapLoader.MAP_WIDTH;
-
 public class Player1 {
 
 	public char texture = '1';
@@ -29,7 +26,7 @@ public class Player1 {
 
 
 	int nearestTreasure(GameState s, int x, int y) {
-		int maxDistance = 5;
+		int maxDistance = 15;
 
 		for (int d = 0; d <= maxDistance; d++) {
 
@@ -69,43 +66,70 @@ public class Player1 {
 		return -1;
 	}
 
+
+	float eval(GameState s, Tile t){
+
+		float scoreDiff = s.p1_score-s.p2_score;
+
+		float eval = 15 * scoreDiff - nearestTreasure(s, t.x, t.y);
+		// System.out.println("Eval of this negihbot: " + eval);
+
+		return eval;
+	}
+
+
 	boolean inBounds(int x, int y) {
 		return x >= 0 && x < 80 && y >= 0 && y < 30;
 	}
 
-	int Maxhattan(GameState s, int px, int py) {
-		int best = Integer.MAX_VALUE;
 
-		for (int y = 0; y < MapLoader.MAP_HEIGHT; y++) {
-			for (int x = 0; x < MapLoader.MAP_WIDTH; x++) {
-				Tile t = s.tiles[y][x];
+	float search(GameState sim, int depth){//recursivey evaluates all neighbors
+		Tile current = sim.tiles[sim.p1_y][sim.p1_x];
 
-				if (t.treasurePresent) {
-					int dist = Math.max(Math.abs(px - x), Math.abs(py - y));
-					if (dist < best) best = dist;
+		if(depth == 0){//base case of recursion
+			float bestEval = -500;
+			Tile bestTile = null;
+
+			for (Tile n : current.neighbours) {
+				if (n == null || n.collision) continue;
+
+				float neighborEval = eval(sim,n);
+
+				if(neighborEval > bestEval){
+					bestEval = neighborEval;
+					bestTile = n;
 				}
+
 			}
+			System.out.println("Best Eval of ths ruoudn:  " + bestEval);
+			return bestTile;
 		}
-		return best;
+
+
+
 	}
 
 
 	public Tile moveDecision(GameState s) {
 
 		Tile current = s.tiles[s.p1_y][s.p1_x];
-		Tile best = null;
+
+		float bestEval = -500;
+		Tile bestTile = null;
 
 		for (Tile n : current.neighbours) {
 			if (n == null || n.collision) continue;
 
+			float neighborEval = eval(s,n);
 
-			best = n;
+			if(neighborEval > bestEval){
+				bestEval = neighborEval;
+				bestTile = n;
+			}
+
 		}
-
-		//System.out.println("Nearest Treasure function:" + nearestTreasure(s, s.p1_x, s.p1_y));
-		System.out.println("Maxhattan function:" + Maxhattan(s, s.p1_x, s.p1_y));
-
-		return best;
+		System.out.println("Best Eval of ths ruoudn:  " + bestEval);
+		return bestTile;
 	}
 
 	int idx(int x, int y) {
