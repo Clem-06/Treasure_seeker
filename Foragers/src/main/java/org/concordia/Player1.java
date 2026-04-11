@@ -1,5 +1,7 @@
 package org.concordia;
 
+import java.util.ArrayList;
+
 public class Player1 {
 
 	public char texture = '1';
@@ -8,7 +10,6 @@ public class Player1 {
 	public int score;
 
 	private int totalPositionsEvaluated;
-
 	public int totalPruned = 0;
 
 
@@ -65,7 +66,7 @@ public class Player1 {
 			}
 		}
 
-		return -1;
+		return 30;
 	}
 
 
@@ -101,7 +102,28 @@ public class Player1 {
 
 		float bestEval = -500;
 
-		for (Tile n : current.neighbours) {
+		ArrayList<Tile> tilesOfInterest = new ArrayList<>(); //diagonals and adjacent treasure to be added
+
+		tilesOfInterest.add(current.neighbours[0]);//NW
+		tilesOfInterest.add(current.neighbours[2]);//NE
+		tilesOfInterest.add(current.neighbours[5]);//SW
+		tilesOfInterest.add(current.neighbours[7]);//SE
+
+
+		if(isRoot){
+		Tile N = current.neighbours[1];
+		if (N.treasurePresent && treasures[XYtoI(N.x, N.y)]) tilesOfInterest.add(N);
+		Tile E = current.neighbours[3];
+		if (E.treasurePresent && treasures[XYtoI(E.x, E.y)]) tilesOfInterest.add(E);
+		Tile S = current.neighbours[4];
+		if (S.treasurePresent && treasures[XYtoI(S.x, S.y)]) tilesOfInterest.add(S);
+		Tile W = current.neighbours[6];
+		if (W.treasurePresent && treasures[XYtoI(W.x, W.y)]) tilesOfInterest.add(W);
+
+	}
+
+
+		for (Tile n : tilesOfInterest) {
 			if (n == null || n.collision) continue;
 
 			//create the simulated Gamestate INSIDE NEIGHTBORS LOOP SO WE DONT NEED TO SAVE OLD VALUES AND UNDO MOVES, JUST CREAGTE NEW ONE
@@ -133,7 +155,7 @@ public class Player1 {
 			}
 
 			if(depth == 1){
-				System.out.println("Candidate Eval:  " + neighborEval);
+				//System.out.println("Candidate Eval:  " + neighborEval);
 			}
 
 			if (neighborEval > bestEval) {
@@ -162,10 +184,15 @@ public class Player1 {
 
 		Tile[] bestTileHolder = new Tile[1]; //create array we pass by reference in search to get best tile
 
-		search(originalState, treasures, 1, bestTileHolder, true);
+		search(originalState, treasures, 12, bestTileHolder, true);
 
 		System.out.println("Current Gamestate's true Eval: " + eval(originalState,treasures));
-		System.out.println("Total positions searched: " + totalPositionsEvaluated);
+
+		System.out.println("Total positions searched: ");
+		System.out.printf("%.1E%n", (double) totalPositionsEvaluated);
+		System.out.println("Rounds left: " + originalState.rounds_left);
+		System.out.printf("");
+
 
 		return bestTileHolder[0];
 	}
