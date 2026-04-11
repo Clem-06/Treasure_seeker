@@ -116,7 +116,7 @@ public class Player1 {
 		}
 
 		if (wallCounter >= 4) {//crowded neghborhood
-			System.out.println("Wall collision");
+			//System.out.println("Wall collision");
 			for (int i = 0; i < 8; i++) {
 				tilesOfInterest.add(current.neighbours[i]);
 			}
