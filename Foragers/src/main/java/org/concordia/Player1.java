@@ -107,7 +107,7 @@ public class Player1 {
 		//We recusively apply the simulation function to evaluate all tiles of interest.
 		//Said tiles include diagonals, and treasure locations
 
-		for (int i = 0; i < 9; i++) {
+		for (int i = 0; i < 8; i++) {
 			if (current.neighbours[i] != null) {
 				if (current.neighbours[i].treasurePresent || isDiagonal(i)) {
 					tilesOfInterest.add(current.neighbours[i]);
@@ -174,7 +174,7 @@ public class Player1 {
 
 		Tile[] bestTileHolder = new Tile[1]; //create array we pass by reference in search to get best tile
 
-		search(originalState, treasures, 12, bestTileHolder, true);
+		search(originalState, treasures, 14, bestTileHolder, true);
 
 		System.out.println("Current Gamestate's true Eval: " + eval(originalState, treasures));
 
