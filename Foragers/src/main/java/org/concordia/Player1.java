@@ -29,7 +29,7 @@ public class Player1 {
 	int nearestTreasure(GameState s, boolean[] treasures) {//magic function, creates squares of increasing size until it finds a treasure or reaches maxDistance
 		int maxDistance = 15;
 		int treasureTargetX = s.p1_x;
-		int treasureTargeyY = s.p1_y;
+		int treasureTargetY = s.p1_y;
 
 		for (int d = 0; d <= maxDistance; d++) {
 
@@ -37,8 +37,8 @@ public class Player1 {
 			for (int dx = -d; dx <= d; dx++) {
 				int nx = treasureTargetX + dx;
 //creating the upper and lower bounds for the square
-				int nyTop = treasureTargeyY - d;
-				int nyBottom = treasureTargeyY + d;
+				int nyTop = treasureTargetY - d;
+				int nyBottom = treasureTargetY + d;
 
 				if (inBounds(nx, nyTop)) {
 					if (s.tiles[nyTop][nx].treasurePresent && treasures[XYtoI(nx, nyTop)]) return d;
@@ -51,7 +51,7 @@ public class Player1 {
 
 			// Left and right columns (excluding corners already checked)
 			for (int dy = -d + 1; dy <= d - 1; dy++) {
-				int ny = treasureTargeyY + dy;
+				int ny = treasureTargetY + dy;
 
 				int nxLeft = treasureTargetX - d;
 				int nxRight = treasureTargetX + d;
@@ -70,7 +70,7 @@ public class Player1 {
 	}
 
 
-	float eval(GameState s, boolean[] treasures) {//removed tile t to go back to alwats evluating p1 position
+	float eval(GameState s, boolean[] treasures) {//removed tile t to go back to always evaluating p1 position
 
 		totalPositionsEvaluated++;
 
@@ -91,7 +91,7 @@ public class Player1 {
 	}
 
 
-	float search(GameState stateToSearch, boolean[] treasures, int depth, Tile[] bestTileHolder, boolean isRoot) {//recursivey evaluates all neighbors while updating
+	float search(GameState stateToSearch, boolean[] treasures, int depth, Tile[] bestTileHolder, boolean isRoot) {//recursively evaluates all neighbors while updating
 		// treasure array and simulation, returns best eval out of all children, root stores bestTile passed in array
 
 		Tile current = stateToSearch.tiles[stateToSearch.p1_y][stateToSearch.p1_x];
@@ -102,7 +102,10 @@ public class Player1 {
 
 		float bestEval = -500;
 
-		ArrayList<Tile> tilesOfInterest = new ArrayList<>(); //diagonals and adjacent treasure to be added
+		ArrayList<Tile> tilesOfInterest = new ArrayList<>();
+		//Tiles of interest, all tiles where we might move
+		//We recusively apply the simulation function to evaluate all tiles of interest.
+		//Said tiles include diagonals, and treasure locations
 
 		for (int i = 0; i < 9; i++) {
 			if (current.neighbours[i] != null) {
@@ -115,7 +118,7 @@ public class Player1 {
 		for (Tile n : tilesOfInterest) {
 			if (n == null || n.collision) continue;
 
-			//create the simulated Gamestate INSIDE NEIGHTBORS LOOP SO WE DONT NEED TO SAVE OLD VALUES AND UNDO MOVES, JUST CREAGTE NEW ONE
+			//create the simulated Gamestate INSIDE NEIGHBORS LOOP SO WE DON'T NEED TO SAVE OLD VALUES AND UNDO MOVES, JUST CREAGTE NEW ONE
 			GameState simulation = new GameState(
 					stateToSearch.tiles,
 					stateToSearch.p1,
@@ -135,11 +138,11 @@ public class Player1 {
 				treasures[XYtoI(n.x, n.y)] = false; //update treasure map to remove collected treasure
 			}
 
-			float neighborEval = search(simulation, treasures, depth - 1, null, false); //no need to pass bestTileHodler down children arent root
+			float neighborEval = search(simulation, treasures, depth - 1, null, false); //no need to pass bestTileHodler down children aren't root
 
 			//undo treasure removal
-			if (n.treasurePresent) { //add treasure back to map for other branches - dont check if still on treasures map as we removed it
-				treasures[XYtoI(n.x, n.y)] = true;
+			if(n.treasurePresent){ //add treasure back to map for other branches - don't check if still on treasures map as we removed it
+				treasures[XYtoI(n.x,n.y)] = true;
 			}
 
 			if (depth == 1) {
