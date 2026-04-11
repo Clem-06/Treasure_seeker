@@ -88,17 +88,21 @@ public class Player1 {
 	}
 
 
-	float search(GameState stateToSearch, int depth) {//recursivey evaluates all neighbors
+	float search(GameState stateToSearch, boolean[] treasures, int depth, Tile[] bestTileHolder, boolean isRoot) {//recursivey evaluates all neighbors while updating
+		// treasure array and simulation, returns best eval out of all children, root stores bestTile passed in array
 
 		Tile current = stateToSearch.tiles[stateToSearch.p1_y][stateToSearch.p1_x];
 
-		if(depth < 0)System.err.println("BIG PROBLEM NEGATIVE SEARCH DEPTH");
-
-		if (depth == 0) {            //base case of recursion
+		if (depth == 0) {            // base case of recursion
 			return eval(stateToSearch);
-		} else {
+		}
 
-			//create the simulated Gamestate
+		float bestEval = -500;
+
+		for (Tile n : current.neighbours) {
+			if (n == null || n.collision) continue;
+
+			//create the simulated Gamestate INSIDE NEIGHTBORS LOOP SO WE DONT NEED TO SAVE OLD VALUES AND UNDO MOVES, JUST CREAGTE NEW ONE
 			GameState simulation = new GameState(
 					stateToSearch.tiles,
 					stateToSearch.p1,
@@ -111,45 +115,25 @@ public class Player1 {
 			simulation.p1_y = stateToSearch.p1_y;
 
 
-			float bestEval = -500;
 
-			for (Tile n : current.neighbours) {
-				if (n == null || n.collision) continue;
-
-			//save original position and score of simulation before changing them
-				int oldx = simulation.p1_x;
-				int oldy = simulation.p1_y;
-				int oldScore = simulation.p1_score;
-
-				//update simulation score if n contains treasure
-				if (n.treasurePresent) {
-					simulation.p1_score += n.treasure.value;
-					System.out.println("Treasure picked up!!!, value:  " + n.treasure.value + "  At depth: " + depth + "  At coordiantes: " );
-				}
-
-				float neighborEval = search(simulation, depth - 1);//BIG ISSUE - TREASURES ARE NOT UPDATED DOWN RECURSION TREE!!!!!!
-
-				//unmove  tile n on simulation
-
-				if (neighborEval > bestEval) {
-					bestEval = neighborEval;
-				}
-
-				//return simulation P1 to original values
-				simulation.p1_x = oldx;
-				simulation.p1_y = oldy;
-				simulation.p1_score = oldScore;
+			//update simulation score if n contains treasure
+			if (n.treasurePresent) {
+				simulation.p1_score += n.treasure.value;
+				treasures[XYtoI(n.x,n.y)] = false; //update treasure map to remove collected treasure
 			}
-//
-//			String indent = "  ".repeat(5- depth);
-//
-//			if (depth > 5) {
-//				System.out.println(indent + "Move to (" + n.x + "," + n.y + ")");
-//			}
 
+			float neighborEval = search(simulation, treasures, depth - 1, null, false); //no need to pass bestTileHodler down children arent root
 
-			return bestEval;
+			//undo treasure removal
+			if(n.treasurePresent){ //add treasure back to map for other branches
+				treasures[XYtoI(n.x,n.y)] = true;
+			}
+
+			if (neighborEval > bestEval) {
+				bestEval = neighborEval;
+			}
 		}
+		return bestEval;
 
 
 	}
@@ -157,67 +141,24 @@ public class Player1 {
 
 	public Tile moveDecision(GameState originalState) {
 
-		Tile current = originalState.tiles[originalState.p1_y][originalState.p1_x];
+		boolean[] treasures = new boolean[MapLoader.MAP_HEIGHT * MapLoader.MAP_WIDTH];
 
-		float bestEval = -500;
-		Tile bestTile = null;
-
-		//create the simulated Gamestate
-		GameState simulation = new GameState(
-				originalState.tiles,
-				originalState.p1,
-				originalState.p2,
-				originalState.rounds_left);
-
-		simulation.p1_score = originalState.p1_score;
-		simulation.p2_score = originalState.p2_score;
-		simulation.p1_x = originalState.p1_x;
-		simulation.p1_y = originalState.p1_y;
-
-
-		for (Tile n : current.neighbours) {
-			if (n == null || n.collision) continue;
-
-
-			//save original position and score of simulation before changing them (more imporatnt in search)
-			int oldx = simulation.p1_x;
-			int oldy = simulation.p1_y;
-			int oldScore = simulation.p1_score;
-
-
-			//change position of player in simulation based on tile n
-			simulation.p1_x = n.x;
-			simulation.p1_y = n.y;
-
-			//update simulation score if n contains treasure
-			if (n.treasurePresent) {
-				simulation.p1_score += n.treasure.value;
+		for (int y = 0; y < MapLoader.MAP_HEIGHT; y++) {
+			for (int x = 0; x < MapLoader.MAP_WIDTH; x++) {
+				if (originalState.tiles[y][x].treasurePresent) {
+					treasures[XYtoI(x, y)] = true;
+				}
 			}
-
-			int searchDepth = 2; //0 is checking just neighbors eval
-
-			float neighborEval = search(simulation, searchDepth);
-
-			System.out.println("Candidate's eval :  " + neighborEval);
-			System.out.println();
-			System.out.println();
-
-			if (neighborEval > bestEval) {
-				bestEval = neighborEval;
-				bestTile = n;
-			}
-
-			//return simulation P1 to original values
-			simulation.p1_x = oldx;
-			simulation.p1_y = oldy;
-			simulation.p1_score = oldScore;
-
 		}
-		System.out.println("Best Eval of ths ruoudn:  " + bestEval);
-		return bestTile;
+
+		Tile[] bestTileHolder = new Tile[1]; //create array we pass by reference in search to get best tile
+
+		search(originalState, treasures, 3, bestTileHolder, true);
+
+		return bestTileHolder[0];
 	}
 
-	int idx(int x, int y) {
+	int XYtoI(int x, int y) { //helper function to convery X,Y coordinates to index in flattened array - treasures
 		return y * MapLoader.MAP_WIDTH + x;
 	}
 

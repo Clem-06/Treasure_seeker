@@ -185,12 +185,12 @@ public class GameEngine {
 		long startTime = System.nanoTime();
 
 		while (state.rounds_left-- > 0) {
-			coordinateRender(state.tiles);
+			render(state.tiles);
 			player1Decision(state);
 			player2Decision(state);
 			gameTick();
 		}
-		coordinateRender(state.tiles);
+		render(state.tiles);
 
 		long endTime = System.nanoTime();
 		long duration = (endTime - startTime); // Duration in nanoseconds
