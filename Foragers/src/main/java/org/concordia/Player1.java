@@ -41,11 +41,11 @@ public class Player1 {
 				int nyBottom = treasureTargeyY + d;
 
 				if (inBounds(nx, nyTop)) {
-					if (s.tiles[nyTop][nx].treasurePresent && treasures[XYtoI(nx,nyTop)]) return d;
+					if (s.tiles[nyTop][nx].treasurePresent && treasures[XYtoI(nx, nyTop)]) return d;
 				}
 
 				if (inBounds(nx, nyBottom)) {
-					if (s.tiles[nyBottom][nx].treasurePresent && treasures[XYtoI(nx,nyBottom)]) return d;
+					if (s.tiles[nyBottom][nx].treasurePresent && treasures[XYtoI(nx, nyBottom)]) return d;
 				}
 			}
 
@@ -57,11 +57,11 @@ public class Player1 {
 				int nxRight = treasureTargetX + d;
 
 				if (inBounds(nxLeft, ny)) {
-					if (s.tiles[ny][nxLeft].treasurePresent && treasures[XYtoI(nxLeft,ny)]) return d;
+					if (s.tiles[ny][nxLeft].treasurePresent && treasures[XYtoI(nxLeft, ny)]) return d;
 				}
 
 				if (inBounds(nxRight, ny)) {
-					if (s.tiles[ny][nxRight].treasurePresent && treasures[XYtoI(nxRight,ny)]) return d;
+					if (s.tiles[ny][nxRight].treasurePresent && treasures[XYtoI(nxRight, ny)]) return d;
 				}
 			}
 		}
@@ -75,7 +75,7 @@ public class Player1 {
 		totalPositionsEvaluated++;
 
 		float pointsScore = s.p1_score - s.p2_score;
-		float distanceScore = nearestTreasure(s,treasures);
+		float distanceScore = nearestTreasure(s, treasures);
 
 		float eval = 10 * pointsScore - distanceScore;
 
@@ -104,24 +104,13 @@ public class Player1 {
 
 		ArrayList<Tile> tilesOfInterest = new ArrayList<>(); //diagonals and adjacent treasure to be added
 
-		tilesOfInterest.add(current.neighbours[0]);//NW
-		tilesOfInterest.add(current.neighbours[2]);//NE
-		tilesOfInterest.add(current.neighbours[5]);//SW
-		tilesOfInterest.add(current.neighbours[7]);//SE
-
-
-		if(isRoot){
-		Tile N = current.neighbours[1];
-		if (N.treasurePresent && treasures[XYtoI(N.x, N.y)]) tilesOfInterest.add(N);
-		Tile E = current.neighbours[3];
-		if (E.treasurePresent && treasures[XYtoI(E.x, E.y)]) tilesOfInterest.add(E);
-		Tile S = current.neighbours[4];
-		if (S.treasurePresent && treasures[XYtoI(S.x, S.y)]) tilesOfInterest.add(S);
-		Tile W = current.neighbours[6];
-		if (W.treasurePresent && treasures[XYtoI(W.x, W.y)]) tilesOfInterest.add(W);
-
-	}
-
+		for (int i = 0; i < 9; i++) {
+			if (current.neighbours[i] != null) {
+				if (current.neighbours[i].treasurePresent || isDiagonal(i)) {
+					tilesOfInterest.add(current.neighbours[i]);
+				}
+			}
+		}
 
 		for (Tile n : tilesOfInterest) {
 			if (n == null || n.collision) continue;
@@ -140,34 +129,32 @@ public class Player1 {
 			simulation.p1_y = n.y;
 
 
-
 			//update simulation score if n contains treasure
-			if (n.treasurePresent && treasures[XYtoI(n.x,n.y)]) {//checking treasure still there before updating simulation score
+			if (n.treasurePresent && treasures[XYtoI(n.x, n.y)]) {//checking treasure still there before updating simulation score
 				simulation.p1_score += n.treasure.value;
-				treasures[XYtoI(n.x,n.y)] = false; //update treasure map to remove collected treasure
+				treasures[XYtoI(n.x, n.y)] = false; //update treasure map to remove collected treasure
 			}
 
 			float neighborEval = search(simulation, treasures, depth - 1, null, false); //no need to pass bestTileHodler down children arent root
 
 			//undo treasure removal
-			if(n.treasurePresent){ //add treasure back to map for other branches - dont check if still on treasures map as we removed it
-				treasures[XYtoI(n.x,n.y)] = true;
+			if (n.treasurePresent) { //add treasure back to map for other branches - dont check if still on treasures map as we removed it
+				treasures[XYtoI(n.x, n.y)] = true;
 			}
 
-			if(depth == 1){
+			if (depth == 1) {
 				//System.out.println("Candidate Eval:  " + neighborEval);
 			}
 
 			if (neighborEval > bestEval) {
 				bestEval = neighborEval;
-				if(isRoot){
+				if (isRoot) {
 					bestTileHolder[0] = n; //put the best move into the output array if node is root
 				}
 			}
 		}
 		return bestEval;
 	}
-
 
 	public Tile moveDecision(GameState originalState) {
 		totalPositionsEvaluated = 0;
@@ -186,7 +173,7 @@ public class Player1 {
 
 		search(originalState, treasures, 12, bestTileHolder, true);
 
-		System.out.println("Current Gamestate's true Eval: " + eval(originalState,treasures));
+		System.out.println("Current Gamestate's true Eval: " + eval(originalState, treasures));
 
 		System.out.println("Total positions searched: ");
 		System.out.printf("%.1E%n", (double) totalPositionsEvaluated);
@@ -198,8 +185,9 @@ public class Player1 {
 	}
 
 
-
-
+	boolean isDiagonal(int x) { //helper function for neighbor diagonals
+		return (x == 0 || x == 2 || x == 5 || x == 7);
+	}
 
 	int XYtoI(int x, int y) { //helper function to convery X,Y coordinates to index in flattened array - treasures
 		return y * MapLoader.MAP_WIDTH + x;
