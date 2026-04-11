@@ -149,28 +149,31 @@ public class Player2 {
 
     public Tile moveDecision(GameState originalState) {
 
-        return null;
+        boolean p2_lobotomy = false;
+        if(p2_lobotomy){
+            return null;
+        }
+        totalPositionsEvaluated = 0;
 
-//        totalPositionsEvaluated = 0;
-//
-//        boolean[] treasures = new boolean[MapLoader.MAP_HEIGHT * MapLoader.MAP_WIDTH];
-//
-//        for (int y = 0; y < MapLoader.MAP_HEIGHT; y++) {
-//            for (int x = 0; x < MapLoader.MAP_WIDTH; x++) {
-//                if (originalState.tiles[y][x].treasurePresent) {
-//                    treasures[XYtoI(x, y)] = true;
-//                }
-//            }
-//        }
-//
-//        Tile[] bestTileHolder = new Tile[1]; //create array we pass by reference in search to get best tile
-//
-//        search(originalState, treasures, 5, bestTileHolder, true);
-//
-//        System.out.println("Current Gamestate's true Eval: " + eval(originalState,treasures));
-//        System.out.println("Total positions searched: " + totalPositionsEvaluated);
-//
-//        return bestTileHolder[0];
+
+        boolean[] treasures = new boolean[MapLoader.MAP_HEIGHT * MapLoader.MAP_WIDTH];
+
+        for (int y = 0; y < MapLoader.MAP_HEIGHT; y++) {
+            for (int x = 0; x < MapLoader.MAP_WIDTH; x++) {
+                if (originalState.tiles[y][x].treasurePresent) {
+                    treasures[XYtoI(x, y)] = true;
+                }
+            }
+        }
+
+        Tile[] bestTileHolder = new Tile[1]; //create array we pass by reference in search to get best tile
+
+        search(originalState, treasures, 1, bestTileHolder, true);
+
+        System.out.println("Current Gamestate's true Eval: " + eval(originalState,treasures));
+        System.out.println("Total positions searched: " + totalPositionsEvaluated);
+
+        return bestTileHolder[0];
     }
 
 

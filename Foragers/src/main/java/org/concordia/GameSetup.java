@@ -30,7 +30,7 @@ public class GameSetup {
 
 //        Collections.shuffle(eligible);
 
-        int shuffleSeed = 5846;
+        int shuffleSeed = 6969;
         Collections.shuffle(eligible, new Random(shuffleSeed));  //deterministic shuffle of treasure for repeatability
 
         int count = Math.min(numberOfTreasures, eligible.size());

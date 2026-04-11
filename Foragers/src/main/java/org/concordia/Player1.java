@@ -27,7 +27,7 @@ public class Player1 {
 
 
 	int nearestTreasure(GameState s, boolean[] treasures) {//magic function, creates squares of increasing size until it finds a treasure or reaches maxDistance
-		int maxDistance = 15;
+		int maxDistance = 30;
 		int treasureTargetX = s.p1_x;
 		int treasureTargetY = s.p1_y;
 
@@ -107,23 +107,33 @@ public class Player1 {
 		//We recusively apply the simulation function to evaluate all tiles of interest.
 		//Said tiles include diagonals, and treasure locations
 
+		//check if crowded, add all (wall will be skipped in loop)
+
+		int wallCounter = 0;
+
 		for (int i = 0; i < 8; i++) {
-			if (current.neighbours[i] != null) {
-				if (current.neighbours[i].treasurePresent || isDiagonal(i)) {
-					tilesOfInterest.add(current.neighbours[i]);
+			if (current.neighbours[i].collision) wallCounter++;
+		}
+
+		if (wallCounter >= 4) {//crowded neghborhood
+			System.out.println("Wall collision");
+			for (int i = 0; i < 8; i++) {
+				tilesOfInterest.add(current.neighbours[i]);
+			}
+		} else {//diagonals and treasures if not crowded
+			for (int i = 0; i < 8; i++) {
+				if (current.neighbours[i] != null) {
+					if (current.neighbours[i].treasurePresent || isDiagonal(i)) {
+						tilesOfInterest.add(current.neighbours[i]);
+					}
 				}
 			}
 		}
-
 		for (Tile n : tilesOfInterest) {
 			if (n == null || n.collision) continue;
 
 			//create the simulated Gamestate INSIDE NEIGHBORS LOOP SO WE DON'T NEED TO SAVE OLD VALUES AND UNDO MOVES, JUST CREAGTE NEW ONE
-			GameState simulation = new GameState(
-					stateToSearch.tiles,
-					stateToSearch.p1,
-					stateToSearch.p2,
-					stateToSearch.rounds_left);
+			GameState simulation = new GameState(stateToSearch.tiles, stateToSearch.p1, stateToSearch.p2, stateToSearch.rounds_left);
 
 			simulation.p1_score = stateToSearch.p1_score;
 			simulation.p2_score = stateToSearch.p2_score;
@@ -141,8 +151,8 @@ public class Player1 {
 			float neighborEval = search(simulation, treasures, depth - 1, null, false); //no need to pass bestTileHodler down children aren't root
 
 			//undo treasure removal
-			if(n.treasurePresent){ //add treasure back to map for other branches - don't check if still on treasures map as we removed it
-				treasures[XYtoI(n.x,n.y)] = true;
+			if (n.treasurePresent) { //add treasure back to map for other branches - don't check if still on treasures map as we removed it
+				treasures[XYtoI(n.x, n.y)] = true;
 			}
 
 			if (depth == 1) {
@@ -174,7 +184,7 @@ public class Player1 {
 
 		Tile[] bestTileHolder = new Tile[1]; //create array we pass by reference in search to get best tile
 
-		search(originalState, treasures, 14, bestTileHolder, true);
+		search(originalState, treasures, 8, bestTileHolder, true);
 
 		System.out.println("Current Gamestate's true Eval: " + eval(originalState, treasures));
 
