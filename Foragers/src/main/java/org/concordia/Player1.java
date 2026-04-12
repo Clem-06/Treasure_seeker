@@ -8,6 +8,8 @@ public class Player1 {
 	public int x;
 	public int y;
 	public int score;
+	int calls;
+	int totalCellsChecked;
 
 	private int totalPositionsEvaluated;
 	public int totalPruned = 0;
@@ -19,19 +21,16 @@ public class Player1 {
 		this.score = 0;
 	}
 
-	public /*Student decides the return type*/ void findPath(GameState state) {
-	}
-
-	public /*Student decides the return type*/ void predictPath(GameState state) {
-	}
-
-
 	int nearestTreasure(GameState s, boolean[] treasures) {//magic function, creates squares of increasing size until it finds a treasure or reaches maxDistance
-		int maxDistance = 30;
+		int maxDistance = 50;
 		int treasureTargetX = s.p1_x;
 		int treasureTargetY = s.p1_y;
 
+		calls++;
+
 		for (int d = 0; d <= maxDistance; d++) {
+			totalCellsChecked ++;
+
 
 			// Top and bottom rows
 			for (int dx = -d; dx <= d; dx++) {
@@ -74,10 +73,10 @@ public class Player1 {
 
 		totalPositionsEvaluated++;
 
-		float pointsScore = s.p1_score - s.p2_score;
+		float pointsScore = s.p1_score;
 		float distanceScore = nearestTreasure(s, treasures);
 
-		float eval = 10 * pointsScore - distanceScore;
+		float eval = 10 * pointsScore - (distanceScore);
 
 
 		//System.out.println("Points Score: " + pointsScore + " Distance Score: -" + distanceScore);
@@ -143,24 +142,37 @@ public class Player1 {
 
 
 			//update simulation score if n contains treasure
+			boolean treasureRemoved = false; //boolean needed to know if treasure was removed at this depth or earlier to know if we should restore it
+
 			if (n.treasurePresent && treasures[XYtoI(n.x, n.y)]) {//checking treasure still there before updating simulation score
 				simulation.p1_score += n.treasure.value;
 				treasures[XYtoI(n.x, n.y)] = false; //update treasure map to remove collected treasure
+				treasureRemoved = true;
+
 			}
 
-			float neighborEval = search(simulation, treasures, depth - 1, null, false); //no need to pass bestTileHodler down children aren't root
+			float neighborSearchEval = search(simulation, treasures, depth - 1, null, false);
+			//no need to pass bestTileHodler down children aren't root
+
+			if(isRoot){
+				neighborSearchEval += 0.1f * eval(simulation, treasures);//maybe works as tiebreaker so picks treasure up early
+			}
 
 			//undo treasure removal
-			if (n.treasurePresent) { //add treasure back to map for other branches - don't check if still on treasures map as we removed it
+			if (treasureRemoved) { //add treasure back to map for other branches using removedBool
 				treasures[XYtoI(n.x, n.y)] = true;
 			}
 
-			if (depth == 1) {
-				//System.out.println("Candidate Eval:  " + neighborEval);
+			if (depth == 12) {
+				System.out.println("Neighbor's search eval (best down that path):  " + neighborSearchEval);
+				float neighborTrueEval = eval(simulation, treasures);
+				System.out.println("Neighbor's eval (evaluate position after 1 move made):  " + neighborTrueEval);
+				System.out.println("Average depth of treasure " +
+						totalCellsChecked / calls);
 			}
 
-			if (neighborEval > bestEval) {
-				bestEval = neighborEval;
+			if (neighborSearchEval > bestEval) {
+				bestEval = neighborSearchEval;
 				if (isRoot) {
 					bestTileHolder[0] = n; //put the best move into the output array if node is root
 				}
@@ -176,7 +188,7 @@ public class Player1 {
 
 		for (int y = 0; y < MapLoader.MAP_HEIGHT; y++) {
 			for (int x = 0; x < MapLoader.MAP_WIDTH; x++) {
-				if (originalState.tiles[y][x].treasurePresent) {
+				if (originalState.tiles[y][x].treasurePresent) {//FIX MOVE ORDEIRNG SO TREASURES ARE PUT IN PRIORITY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 					treasures[XYtoI(x, y)] = true;
 				}
 			}
@@ -184,7 +196,7 @@ public class Player1 {
 
 		Tile[] bestTileHolder = new Tile[1]; //create array we pass by reference in search to get best tile
 
-		search(originalState, treasures, 8, bestTileHolder, true);
+		search(originalState, treasures, 12, bestTileHolder, true);
 
 		System.out.println("Current Gamestate's true Eval: " + eval(originalState, treasures));
 

@@ -170,8 +170,8 @@ public class Player2 {
 
         search(originalState, treasures, 1, bestTileHolder, true);
 
-        System.out.println("Current Gamestate's true Eval: " + eval(originalState,treasures));
-        System.out.println("Total positions searched: " + totalPositionsEvaluated);
+        //System.out.println("Current Gamestate's true Eval: " + eval(originalState,treasures));
+        //System.out.println("Total positions searched: " + totalPositionsEvaluated);
 
         return bestTileHolder[0];
     }
