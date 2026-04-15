@@ -195,8 +195,8 @@ public class GameEngine {
 		long endTime = System.nanoTime();
 		long duration = (endTime - startTime); // Duration in nanoseconds
 
-		long durationMillis = duration / 1_000_000;
-		System.out.println("Execution time in MS:  " + durationMillis);
+		long durationMillis = duration / 1_000_000_000;
+		System.out.println("Execution time in Seconds:  " + durationMillis);
 
 		if (state.p1.score == state.p2.score) return 3;
 		return (state.p1.score > state.p2.score) ? 1 : 2;

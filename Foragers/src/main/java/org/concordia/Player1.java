@@ -63,7 +63,7 @@ public class Player1 {
 			}
 		}
 
-		return 30;
+		return 55;
 	}
 
 
@@ -112,15 +112,14 @@ public class Player1 {
 			if (current.neighbours[i].collision) wallCounter++;
 		}
 
-		if (wallCounter >= 4) {//crowded neghborhood
-			//System.out.println("Wall collision");
+		if (wallCounter >= 4) {//crowded neighborhood, add all neighbors
 			for (int i = 0; i < 8; i++) {
 				tilesOfInterest.add(current.neighbours[i]);
 			}
 		} else {//diagonals and treasures if not crowded
 			for (int i = 0; i < 8; i++) {
 				if (current.neighbours[i] != null) {
-					if (current.neighbours[i].treasurePresent || isDiagonal(i)) {//FIX MOVE ORDEIRNG SO TREASURES ARE PUT IN PRIORITY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+					if (current.neighbours[i].treasurePresent || isDiagonal(i)) {
 						tilesOfInterest.add(current.neighbours[i]);
 					}
 				}
@@ -169,9 +168,12 @@ public class Player1 {
 
 			if (neighborSearchEval > bestEval) {
 				bestEval = neighborSearchEval;
+
 				if (isRoot) {
 					bestTileHolder[0] = n; //put the best move into the output array if node is root
 				}
+			}else if(neighborSearchEval == bestEval && isRoot) {
+			//	System.out.println("Emergency tiebreaker nahattan needed -------------------------------------------------");
 			}
 		}
 		return bestEval;
@@ -202,7 +204,7 @@ public class Player1 {
 				if (originalState.tiles[mapY][mapX].treasurePresent) {
 					newDistanceP2 = Math.max(Math.abs(originalState.p2_x - mapX), Math.abs(originalState.p2_y - mapY)); // Maxhattan for P2
 
-					if(newDistanceP2 < bestDistanceP2) {
+					if (newDistanceP2 < bestDistanceP2) {
 						bestDistanceP2 = newDistanceP2;
 						bestP2X = mapX;
 						bestP2Y = mapY;
@@ -210,13 +212,11 @@ public class Player1 {
 				}
 			}
 		}
-		int distanceP1 = Math.max(Math.abs(originalState.p1_x - bestP2X ), Math.abs(originalState.p1_y - bestP2Y));
-		if(bestDistanceP2 <= distanceP1){//remove treasure at bestX bestY if the nearest treasure to P2 is also further from P1 or equal
+		int distanceP1 = Math.max(Math.abs(originalState.p1_x - bestP2X), Math.abs(originalState.p1_y - bestP2Y));
+		if (bestDistanceP2 <= distanceP1) {//remove treasure at bestX bestY if the nearest treasure to P2 is also further from P1 or equal
 			treasures[XYtoI(bestP2X, bestP2Y)] = false; //pretend there is no treasure as we dont want p1 chasing something p2 will get first
-			System.out.println("treasure removed at: " +  bestP2X + ", " + bestP2Y);
+			//System.out.println("treasure removed at: " + bestP2X + ", " + bestP2Y);
 		}
-
-
 
 		Tile[] bestTileHolder = new Tile[1]; //create array we pass by reference in search to get best tile
 
@@ -233,9 +233,7 @@ public class Player1 {
 	}
 
 
-	boolean isDiagonal(int x) { //helper function for neighbor diagonals
-		return (x == 0 || x == 2 || x == 5 || x == 7);
-	}
+	boolean isDiagonal(int x) { return (x == 0 || x == 2 || x == 5 || x == 7); } //helper function for neighbor diagonals
 
 	int XYtoI(int x, int y) { //helper function to convery X,Y coordinates to index in flattened array - treasures
 		return y * MapLoader.MAP_WIDTH + x;
