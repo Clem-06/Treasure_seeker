@@ -88,8 +88,8 @@ public class Player1 {
 	}
 
 
-	float search(GameState stateToSearch, boolean[] treasures, int depth, Tile[] bestTileHolder, boolean isRoot) {//recursively evaluates all neighbors while updating
-		// treasure array and simulation, returns best eval out of all children, root stores bestTile passed in array
+	float search(GameState stateToSearch, boolean[] treasures, int depth, Tile[] bestTileHolder, boolean isRoot) {
+		//recursively evaluates all neighbors while updating treasure array and simulation, returns best eval out of all children, root stores bestTile passed in array
 
 		Tile current = stateToSearch.tiles[stateToSearch.p1_y][stateToSearch.p1_x];
 
