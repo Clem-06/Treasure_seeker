@@ -196,8 +196,8 @@ public class Player2 {
         int bestDistanceP1 = 999;
         int newDistanceP1;
 
-        int bestP2X = 0;
-        int bestP2Y = 0;
+        int bestP1X = 0;
+        int bestP1Y = 0;
 
         for (int mapY = 0; mapY < MapLoader.MAP_HEIGHT; mapY++) {
             for (int mapX = 0; mapX < MapLoader.MAP_WIDTH; mapX++) {
@@ -206,15 +206,15 @@ public class Player2 {
 
                     if (newDistanceP1 < bestDistanceP1) {
                         bestDistanceP1 = newDistanceP1;
-                        bestP2X = mapX;
-                        bestP2Y = mapY;
+                        bestP1X = mapX;
+                        bestP1Y = mapY;
                     }
                 }
             }
         }
-        int distanceP1 = Math.max(Math.abs(originalState.p2_x - bestP2X), Math.abs(originalState.p2_y - bestP2Y));
-        if (bestDistanceP1 <= distanceP1) {//remove treasure at bestX bestY if the nearest treasure to P2 is also further from P1 or equal
-            treasures[XYtoI(bestP2X, bestP2Y)] = false; //pretend there is no treasure as we dont want p1 chasing something p2 will get first
+        int distanceP2 = Math.max(Math.abs(originalState.p2_x - bestP1X), Math.abs(originalState.p2_y - bestP1Y));//distance from p2 to treasure closes to p1
+        if (bestDistanceP1 <= distanceP2) {//remove treasure at bestX bestY if the nearest treasure to P2 is also further from P1 or equal
+            treasures[XYtoI(bestP1X, bestP1Y)] = false; //pretend there is no treasure as we dont want p1 chasing something p2 will get first
             //System.out.println("treasure removed at: " + bestP2X + ", " + bestP2Y);
         }
 
