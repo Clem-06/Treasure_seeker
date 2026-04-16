@@ -212,6 +212,12 @@ public class Player2 {
                 }
             }
         }
+        if (bestDistanceP1 == 999) {//empty map case
+            System.out.println("EMPTY MAP-------------------------------------");
+            return null;
+        }
+
+
         int distanceP2 = Math.max(Math.abs(originalState.p2_x - bestP1X), Math.abs(originalState.p2_y - bestP1Y));//distance from p2 to treasure closes to p1
         if (bestDistanceP1 <= distanceP2) {//remove treasure at bestX bestY if the nearest treasure to P2 is also further from P1 or equal
             treasures[XYtoI(bestP1X, bestP1Y)] = false; //pretend there is no treasure as we dont want p1 chasing something p2 will get first

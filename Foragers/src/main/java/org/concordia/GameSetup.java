@@ -11,7 +11,7 @@ import static org.concordia.MapLoader.MAP_WIDTH;
 public class GameSetup {
 
     //STUDENT-MODIFIABLE PARAMETER----------
-    public final int numberOfTreasures = 50; //Increase or decrease the amount of treasures on the map
+    public final int numberOfTreasures = 5; //Increase or decrease the amount of treasures on the map
     //--------------------------------------
     public boolean spawnEntities(Player1 p1, Player2 p2, Tile[][] tiles) {
         spawnPlayers(p1, p2, tiles);

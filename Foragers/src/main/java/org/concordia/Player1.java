@@ -22,7 +22,7 @@ public class Player1 {
 	}
 
 	int nearestTreasure(GameState s, boolean[] treasures) {//magic function, creates squares of increasing size until it finds a treasure or reaches maxDistance
-		int maxDistance = 50;
+		int maxDistance = 40;
 		int treasureTargetX = s.p1_x;
 		int treasureTargetY = s.p1_y;
 
@@ -63,7 +63,7 @@ public class Player1 {
 			}
 		}
 
-		return 55;
+		return 45;
 	}
 
 
@@ -212,6 +212,13 @@ public class Player1 {
 				}
 			}
 		}
+
+
+		if (bestDistanceP2 == 999) {//empty map case
+			System.out.println("EMPTY MAP-------------------------------------");
+			return null;
+		}
+
 		int distanceP1 = Math.max(Math.abs(originalState.p1_x - bestP2X), Math.abs(originalState.p1_y - bestP2Y));//distance from p1 to treasure closes to p2
 		if (bestDistanceP2 <= distanceP1) {//remove treasure at bestX bestY if the nearest treasure to P2 is also further from P1 or equal
 			treasures[XYtoI(bestP2X, bestP2Y)] = false; //pretend there is no treasure as we dont want p1 chasing something p2 will get first
