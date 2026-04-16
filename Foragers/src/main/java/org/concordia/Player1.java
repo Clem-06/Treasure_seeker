@@ -222,10 +222,10 @@ public class Player1 {
 
 		search(originalState, treasures, 12, bestTileHolder, true);
 
-		System.out.println("Current Gamestate's true Eval: " + eval(originalState, treasures));
-
-		System.out.println("Total positions searched: ");
-		System.out.printf("%.1E%n", (double) totalPositionsEvaluated);
+//		System.out.println("Current Gamestate's true Eval: " + eval(originalState, treasures));
+//
+//		System.out.println("Total positions searched: ");
+//		System.out.printf("%.1E%n", (double) totalPositionsEvaluated);
 		System.out.println("Rounds left: " + originalState.rounds_left);
 
 
